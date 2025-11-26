@@ -6,6 +6,8 @@
     <title>E-Perpustakaan Digital</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,14 +88,16 @@
                 <p class="text-center text-slate-500 mt-2 mb-6">Masuk untuk mengakses perpustakaan.</p>
                 <form id="login-form">
                     <div class="mb-4">
-                        <label for="username" class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                        <input type="text" id="username" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                        <!-- Label diubah untuk memperjelas input yang dibutuhkan -->
+                        <label for="login-identifier" class="block text-sm font-medium text-slate-700 mb-1">Email (User) / Username (Admin)</label>
+                        <input type="text" id="login-identifier" placeholder="user@example.com atau admin123" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                        <p class="text-xs text-slate-400 mt-1 italic">User biasa wajib menggunakan Email.</p>
                     </div>
                     <div class="mb-6">
                         <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
                         <input type="password" id="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
                     </div>
-                    <p id="login-error" class="text-red-500 text-sm text-center mb-4 h-5"></p>
+                    <div id="login-error" class="text-red-500 text-sm text-center mb-4 min-h-[1.25rem]"></div>
                     <button type="submit" class="w-full bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-amber-700 transition-colors shadow">Login</button>
                 </form>
                 <p class="text-center mt-4 text-sm text-slate-600">Belum punya akun? <button type="button" id="show-register-btn" class="font-semibold text-amber-600 hover:underline">Daftar di sini</button></p>
@@ -104,19 +108,20 @@
                 <h2 class="text-3xl font-bold text-center text-slate-900">Daftar Akun Baru</h2>
                 <p class="text-center text-slate-500 mt-2 mb-6">Buat akun untuk mulai meminjam buku.</p>
                 <form id="register-form">
-                    <div class="mb-4">
+                     <div class="mb-4">
                         <label for="reg-username" class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                        <input type="text" id="reg-username" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                        <input type="text" id="reg-username" placeholder="Contoh: pembaca_buku" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="reg-email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <input type="email" id="reg-email" placeholder="nama@email.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
                     </div>
                     <div class="mb-4">
                         <label for="reg-password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                        <input type="password" id="reg-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                        <input type="password" id="reg-password" minlength="8" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                         <p class="text-xs text-slate-500 mt-1">Minimal 8 karakter.</p>
                     </div>
-                     <div class="mb-6">
-                        <label for="reg-confirm-password" class="block text-sm font-medium text-slate-700 mb-1">Konfirmasi Password</label>
-                        <input type="password" id="reg-confirm-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" required>
-                    </div>
-                    <p id="register-error" class="text-red-500 text-sm text-center mb-4 h-5"></p>
+                    <div id="register-error" class="text-red-500 text-sm text-center mb-4 min-h-[1.25rem]"></div>
                     <button type="submit" class="w-full bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-amber-700 transition-colors shadow">Daftar</button>
                 </form>
                  <p class="text-center mt-4 text-sm text-slate-600">Sudah punya akun? <button type="button" id="show-login-btn" class="font-semibold text-amber-600 hover:underline">Login di sini</button></p>
@@ -231,10 +236,7 @@
             <div id="user-management-page" class="page hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-3xl font-bold text-slate-800">Manajemen Pengguna</h2>
-                    <button id="add-user-btn" class="bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors shadow">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block -mt-1 mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Tambah Pengguna
-                    </button>
+                     <!-- Add User button removed as Supabase handles user creation via sign-up -->
                 </div>
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
@@ -242,6 +244,7 @@
                             <thead class="bg-slate-50 border-b">
                                 <tr>
                                     <th class="p-4 font-semibold">Username</th>
+                                    <th class="p-4 font-semibold">Email</th>
                                     <th class="p-4 font-semibold">Peran</th>
                                     <th class="p-4 font-semibold text-right">Aksi</th>
                                 </tr>
@@ -252,8 +255,12 @@
                         </table>
                     </div>
                 </div>
+                 <!-- Pesan jika terjadi error RLS -->
+                 <p id="rls-error-message" class="text-red-500 text-sm mt-4 text-center hidden">
+                     Gagal memuat data pengguna. Jika Anda melihat error 'infinite recursion' di konsol, pastikan kebijakan RLS Supabase untuk tabel 'profiles' sudah benar. Lihat panduan setup.
+                 </p>
             </div>
-            
+
             <!-- Reports Page (Admin Only) -->
             <div id="reports-page" class="page hidden">
                 <h2 class="text-3xl font-bold text-slate-800 mb-6">Laporan Perpustakaan</h2>
@@ -379,21 +386,16 @@
         </div>
     </div>
     
-    <!-- Add/Edit User Modal -->
-    <div id="add-edit-user-modal" class="fixed inset-0 z-40 flex items-center justify-center p-4 modal-backdrop hidden">
+    <!-- Edit User Role Modal -->
+    <div id="edit-user-modal" class="fixed inset-0 z-40 flex items-center justify-center p-4 modal-backdrop hidden">
         <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-             <form id="add-edit-user-form" class="p-8">
-                 <h2 id="modal-user-form-title" class="text-2xl font-bold text-slate-900 mb-6">Tambah Pengguna Baru</h2>
-                 <input type="hidden" id="user-username-original">
+             <form id="edit-user-form" class="p-8">
+                 <h2 id="modal-user-form-title" class="text-2xl font-bold text-slate-900 mb-6">Edit Peran Pengguna</h2>
+                 <input type="hidden" id="user-id-to-edit">
                  <div class="space-y-4">
                      <div>
-                         <label for="user-username" class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                         <input type="text" id="user-username" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" required>
-                     </div>
-                     <div>
-                         <label for="user-password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                         <input type="password" id="user-password" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500">
-                         <p class="text-xs text-slate-500 mt-1">Kosongkan jika tidak ingin mengubah password.</p>
+                         <label for="user-username-display" class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                         <input type="text" id="user-username-display" class="w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-100" readonly>
                      </div>
                      <div>
                          <label for="user-role" class="block text-sm font-medium text-slate-700 mb-1">Peran</label>
@@ -453,58 +455,43 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const initialBooks = [
-            { id: 1, title: 'Bumi Manusia', author: 'Pramoedya Ananta Toer', category: 'Fiksi', description: 'Sebuah roman sejarah yang mengambil latar belakang awal abad ke-20, mengisahkan perjalanan Minke, seorang pribumi terpelajar di tengah-tengah pergolakan kolonialisme.', coverUrl: 'https://placehold.co/400x600/6366f1/ffffff?text=Bumi+Manusia' },
-            { id: 2, title: 'Laskar Pelangi', author: 'Andrea Hirata', category: 'Fiksi', description: 'Kisah inspiratif tentang sekelompok anak di Belitung yang berjuang untuk mendapatkan pendidikan yang layak di tengah keterbatasan.', coverUrl: 'https://placehold.co/400x600/f59e0b/ffffff?text=Laskar+Pelangi' },
-            { id: 3, title: 'Sapiens: Riwayat Singkat Umat Manusia', author: 'Yuval Noah Harari', category: 'Non-Fiksi', description: 'Sebuah penelusuran mendalam tentang sejarah umat manusia, dari zaman batu hingga revolusi kognitif, agrikultur, dan sains.', coverUrl: 'https://placehold.co/400x600/10b981/ffffff?text=Sapiens' },
-            { id: 4, title: 'Cosmos', author: 'Carl Sagan', category: 'Sains', description: 'Menjelajahi keajaiban alam semesta, dari galaksi terjauh hingga partikel terkecil, dengan penjelasan yang mudah dipahami dan puitis.', coverUrl: 'https://placehold.co/400x600/0ea5e9/ffffff?text=Cosmos' },
-            { id: 5, title: 'Atomic Habits', author: 'James Clear', category: 'Non-Fiksi', description: 'Panduan praktis untuk membangun kebiasaan baik dan menghilangkan kebiasaan buruk melalui perubahan-perubahan kecil yang konsisten.', coverUrl: 'https://placehold.co/400x600/ef4444/ffffff?text=Atomic+Habits' },
-            { id: 6, title: 'Steve Jobs', author: 'Walter Isaacson', category: 'Biografi', description: 'Biografi lengkap dan mendalam tentang kehidupan, karir, dan visi salah satu inovator terbesar di dunia teknologi, Steve Jobs.', coverUrl: 'https://placehold.co/400x600/4f46e5/ffffff?text=Steve+Jobs' },
-        ];
-        
+
+        // --- SUPABASE SETUP ---
+        // GANTI DENGAN URL DAN KUNCI ANON PROYEK SUPABASE ANDA
+        const supabaseUrl = 'https://jnfeehtclzcitcqypcvh.supabase.co'; // <-- ISI URL SUPABASE ANDA DI SINI
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZmVlaHRjbHpjaXRjcXlwY3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5Mjk1NTMsImV4cCI6MjA3NjUwNTU1M30.TgBl-TXmGnEqmhSuZfi4RS7oTRLjjVW63V5VRCroX4A'; // <-- ISI KUNCI ANON SUPABASE ANDA DI SINI
+
+        if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('https//example.com') || supabaseUrl.includes('YOUR_SUPABASE_URL')) {
+            document.body.innerHTML = `<div class="p-8 text-center bg-red-100 text-red-800">
+                <h1 class="text-2xl font-bold">Konfigurasi Supabase Diperlukan</h1>
+                <p class="mt-2">Silakan buka file <code>index.html</code>, cari bagian "SUPABASE SETUP", dan isi variabel <code>supabaseUrl</code> dan <code>supabaseKey</code> dengan kredensial dari proyek Supabase Anda.</p>
+                <p class="mt-4">Ikuti panduan di file <code>supabase_setup_guide.md</code> untuk menyiapkan database.</p>
+                </div>`;
+            
+            // Tampilkan notifikasi jika ini adalah lingkungan pratinjau
+            if (window.self !== window.top) { // Cek jika di dalam iframe
+                 showNotificationModal("Konfigurasi Diperlukan", "Harap masukkan URL dan Kunci Anon Supabase Anda di dalam kode (baris 713-714) untuk menjalankan aplikasi.");
+            }
+            return;
+        }
+
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+
         // --- DATA & STATE MANAGEMENT ---
         let books = [];
         let history = [];
-        let users = [];
-        let currentUser = null;
+        let profiles = []; // To store user profiles including roles
+        let currentUserProfile = null; // Ini akan berisi { id, username, role } dari tabel profiles, atau null, atau object admin hardcoded
         let confirmCallback = null;
-        
-        const loadBooks = () => {
-            const storedBooks = localStorage.getItem('libraryBooks');
-            if (storedBooks) books = JSON.parse(storedBooks);
-            else books = initialBooks.map(book => ({ ...book, status: 'Tersedia', borrowedBy: null, bookedBy: null, dueDate: null, borrowDate: null }));
-        };
-        const saveBooks = () => localStorage.setItem('libraryBooks', JSON.stringify(books));
-        
-        const loadHistory = () => {
-            const storedHistory = localStorage.getItem('libraryHistory');
-            history = storedHistory ? JSON.parse(storedHistory) : [];
-        };
-        const saveHistory = () => localStorage.setItem('libraryHistory', JSON.stringify(history));
-
-        const loadUsers = () => {
-            const storedUsers = localStorage.getItem('libraryUsers');
-            if (storedUsers) {
-                users = JSON.parse(storedUsers);
-            } else {
-                users = [
-                    { username: 'admin', password: 'admin123', role: 'admin' },
-                    { username: 'pengguna', password: 'password', role: 'user' }
-                ];
-            }
-        };
-        const saveUsers = () => localStorage.setItem('libraryUsers', JSON.stringify(users));
-
-        const logHistoryAction = (action, bookTitle, username) => {
-            const newLog = { action, bookTitle, username, timestamp: new Date().toISOString() };
-            history.unshift(newLog);
-            saveHistory();
-        };
+        let isHardcodedAdmin = false; // Flag untuk admin hardcoded
+        let realtimeFallbackInterval = null; // Interval untuk polling jika realtime gagal
 
         // --- DOM ELEMENTS ---
         const authScreen = document.getElementById('auth-screen');
         const loginFormContainer = document.getElementById('login-form-container');
         const loginForm = document.getElementById('login-form');
+        const loginIdentifierInput = document.getElementById('login-identifier'); // Input untuk username/email
         const loginError = document.getElementById('login-error');
         const registerFormContainer = document.getElementById('register-form-container');
         const registerForm = document.getElementById('register-form');
@@ -530,7 +517,6 @@
         const historyEmpty = document.getElementById('history-empty');
         const newlyAddedGrid = document.getElementById('newly-added-grid');
         const userListTbody = document.getElementById('user-list-tbody');
-        const addUserBtn = document.getElementById('add-user-btn');
         const manageUserNavBtn = document.getElementById('manage-user-nav-btn');
         const reportsNavBtn = document.getElementById('reports-nav-btn');
         const borrowingHistorySection = document.getElementById('borrowing-history-section');
@@ -546,10 +532,9 @@
         const bookCoverFileInput = document.getElementById('book-cover-file');
         const bookCoverUrlInput = document.getElementById('book-cover-url');
         const coverPreview = document.getElementById('cover-preview');
-        const addEditUserModal = document.getElementById('add-edit-user-modal');
-        const addEditUserForm = document.getElementById('add-edit-user-form');
+        const editUserModal = document.getElementById('edit-user-modal');
+        const editUserForm = document.getElementById('edit-user-form');
         const cancelUserFormBtn = document.getElementById('cancel-user-form-btn');
-        const modalUserFormTitle = document.getElementById('modal-user-form-title');
         const userFormError = document.getElementById('user-form-error');
         const userHistoryModal = document.getElementById('user-history-modal');
         const userHistoryTitle = document.getElementById('user-history-title');
@@ -562,6 +547,7 @@
         const notificationTitle = document.getElementById('notification-title');
         const notificationMessage = document.getElementById('notification-message');
         const notificationOkBtn = document.getElementById('notification-ok-btn');
+        const rlsErrorMessage = document.getElementById('rls-error-message'); // Element untuk pesan error RLS
 
         // --- PAGE NAVIGATION ---
         const showPage = (pageId) => {
@@ -590,73 +576,127 @@
         });
 
         // --- ACTION HANDLERS ---
-        const handleBorrow = (bookId) => {
+        const handleBorrow = async (bookId) => {
+            if (!currentUserProfile) return; // Pastikan user sudah login
             const book = books.find(b => b.id === bookId);
             if (!book) return;
 
-            book.status = 'Dipinjam';
-            book.borrowedBy = currentUser.username;
-            book.bookedBy = null; // Clear booking if any
-            
             const now = new Date();
             const dueDate = new Date();
-            dueDate.setDate(now.getDate() + 7); // Set due date to 7 days from now
-            
-            book.borrowDate = now.toISOString();
-            book.dueDate = dueDate.toISOString();
+            dueDate.setDate(now.getDate() + 7);
 
-            logHistoryAction('Pinjam', book.title, currentUser.username);
-            saveBooks();
-            hideDetailModal();
-            renderAllActivePages();
-            showNotificationModal('Berhasil', `Anda telah berhasil meminjam "${book.title}".`);
-        };
+            const { error } = await supabaseClient.from('books').update({
+                status: 'Dipinjam',
+                borrowedBy: currentUserProfile.username,
+                bookedBy: null,
+                borrowDate: now.toISOString(),
+                dueDate: dueDate.toISOString()
+            }).eq('id', bookId);
 
-        const handleReturn = (bookId) => {
-            const book = books.find(b => b.id === bookId);
-            if (!book) return;
-            logHistoryAction('Kembalikan', book.title, currentUser.username);
-            
-            if (book.bookedBy) {
-                book.status = 'Dipesan';
-                // The book is now "borrowed" by the user who booked it, making it ready for pickup
-                book.borrowedBy = book.bookedBy;
-                book.bookedBy = null;
+            if (error) {
+                console.error("Error borrowing book:", error);
+                showNotificationModal('Error', 'Gagal meminjam buku.');
             } else {
-                book.status = 'Tersedia';
-                book.borrowedBy = null;
+                await logHistoryAction('Pinjam', book.title, currentUserProfile.username);
+                hideDetailModal();
+                showNotificationModal('Berhasil', `Anda telah berhasil meminjam "${book.title}".`);
+                // Force update jika realtime gagal
+                if (realtimeFallbackInterval) fetchInitialData();
             }
-            book.dueDate = null;
-            book.borrowDate = null;
-            
-            saveBooks();
-            hideDetailModal();
-            renderAllActivePages();
         };
 
-        const handleBook = (bookId) => {
+        const handleReturn = async (bookId) => {
+            if (!currentUserProfile) return; // Pastikan user sudah login
             const book = books.find(b => b.id === bookId);
             if (!book) return;
-            book.bookedBy = currentUser.username;
-            // The status remains 'Dipinjam' until returned, but now it has a booking
-            logHistoryAction('Booking', book.title, currentUser.username);
-            saveBooks();
-            hideDetailModal();
-            renderAllActivePages();
+
+            let updateData = {};
+            if (book.bookedBy) {
+                updateData = {
+                    status: 'Dipesan',
+                    borrowedBy: book.bookedBy,
+                    bookedBy: null,
+                    borrowDate: null,
+                    dueDate: null
+                };
+            } else {
+                updateData = {
+                    status: 'Tersedia',
+                    borrowedBy: null,
+                    borrowDate: null,
+                    dueDate: null
+                };
+            }
+
+            const { error } = await supabaseClient.from('books').update(updateData).eq('id', bookId);
+
+            if (error) {
+                 console.error("Error returning book:", error);
+                 showNotificationModal('Error', 'Gagal mengembalikan buku.');
+            } else {
+                await logHistoryAction('Kembalikan', book.title, currentUserProfile.username);
+                hideDetailModal();
+                if (realtimeFallbackInterval) fetchInitialData();
+            }
         };
 
-        const handleCancelBooking = (bookId) => {
+        const handleBook = async (bookId) => {
+            if (!currentUserProfile) return; // Pastikan user sudah login
             const book = books.find(b => b.id === bookId);
             if (!book) return;
-            book.bookedBy = null;
-            logHistoryAction('Batal Booking', book.title, currentUser.username);
-            saveBooks();
-            hideDetailModal();
-            renderAllActivePages();
+
+            const { error } = await supabaseClient.from('books').update({
+                bookedBy: currentUserProfile.username
+            }).eq('id', bookId);
+
+            if (error) {
+                console.error("Error booking book:", error);
+                showNotificationModal('Error', 'Gagal booking buku.');
+            } else {
+                await logHistoryAction('Booking', book.title, currentUserProfile.username);
+                hideDetailModal();
+                if (realtimeFallbackInterval) fetchInitialData();
+            }
         };
-        
+
+        const handleCancelBooking = async (bookId) => {
+            if (!currentUserProfile) return; // Pastikan user sudah login
+            const book = books.find(b => b.id === bookId);
+            if (!book) return;
+
+            const { error } = await supabaseClient.from('books').update({
+                bookedBy: null
+            }).eq('id', bookId);
+
+            if (error) {
+                console.error("Error canceling booking:", error);
+                showNotificationModal('Error', 'Gagal membatalkan booking.');
+            } else {
+                await logHistoryAction('Batal Booking', book.title, currentUserProfile.username);
+                hideDetailModal();
+                if (realtimeFallbackInterval) fetchInitialData();
+            }
+        };
+
+        const logHistoryAction = async (action, bookTitle, username) => {
+             // Untuk admin hardcoded, jangan simpan history ke DB karena tidak punya user ID Supabase
+             if (isHardcodedAdmin) {
+                 console.log(`Admin action logged locally: ${action} - ${bookTitle}`);
+                 // Anda bisa menyimpan log admin hardcoded ke array lokal jika perlu, tapi tidak ke Supabase
+                 return;
+             }
+             // Hanya simpan history ke Supabase jika bukan admin hardcoded
+             try {
+                const { error } = await supabaseClient.from('history').insert([{ action, bookTitle, username }]);
+                if (error) throw error;
+             } catch (error) {
+                 console.error("Error logging history:", error);
+                 // Mungkin tampilkan notifikasi error ke admin jika gagal log?
+             }
+        };
+
         const createBookCard = (book) => {
-            const isAdmin = currentUser && currentUser.role === 'admin';
+            const isAdmin = currentUserProfile && currentUserProfile.role === 'admin';
             const statusColors = { 'Tersedia': 'bg-green-100 text-green-800', 'Dipinjam': 'bg-red-100 text-red-800', 'Dipesan': 'bg-yellow-100 text-yellow-800' };
             const statusBadge = `<div class="status-badge ${statusColors[book.status]}">${book.status}</div>`;
             const adminControls = isAdmin ? `<div class="admin-controls"><button class="edit-btn" data-id="${book.id}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-600"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button><button class="delete-btn" data-id="${book.id}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-600"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button></div>` : '';
@@ -681,26 +721,39 @@
 
         // --- RENDER FUNCTIONS ---
         const renderHomePage = () => {
-            document.getElementById('home-welcome-title').innerText = `Selamat Datang, ${currentUser.username}!`;
+            // Pastikan currentUserProfile sudah terisi sebelum mengakses username
+            if (currentUserProfile) {
+                document.getElementById('home-welcome-title').innerText = `Selamat Datang, ${currentUserProfile.username}!`;
+            } else {
+                 document.getElementById('home-welcome-title').innerText = `Selamat Datang!`; // Fallback jika profile belum load
+            }
             newlyAddedGrid.innerHTML = '';
-            const newBooks = [...books].sort((a, b) => b.id - a.id).slice(0, 5);
-            newBooks.forEach(book => {
+            // Ambil 5 buku terbaru berdasarkan kolom 'created_at' dari Supabase jika tersedia
+             const sortedBooks = [...books].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+             const newBooks = sortedBooks.slice(0, 5);
+             newBooks.forEach(book => {
                 newlyAddedGrid.innerHTML += createBookCard(book);
             });
         };
 
         const renderHistory = () => {
-            if (currentUser.role !== 'admin') {
+            // Cek role setelah currentUserProfile dipastikan ada
+            if (!currentUserProfile || currentUserProfile.role !== 'admin') {
                 historySection.classList.add('hidden');
                 return;
             }
             historySection.classList.remove('hidden');
             historyList.innerHTML = '';
-            if (history.length === 0) {
+
+             // Ambil history terbaru dari state 'history' yang diupdate dari Supabase
+            const sortedHistory = [...history].sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+
+            if (sortedHistory.length === 0) {
                 historyEmpty.classList.remove('hidden');
             } else {
                 historyEmpty.classList.add('hidden');
-                history.forEach(log => {
+                sortedHistory.forEach(log => {
                     const logDate = new Date(log.timestamp);
                     const formattedDate = `${logDate.toLocaleDateString('id-ID')} ${logDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
                     const actionColors = { 'Pinjam': 'text-amber-600', 'Kembalikan': 'text-green-600', 'Booking': 'text-yellow-600', 'Batal Booking': 'text-slate-600', 'Tambah Buku': 'text-purple-600', 'Edit Buku': 'text-orange-600', 'Hapus Buku': 'text-red-600' };
@@ -711,13 +764,15 @@
         };
 
         const renderMyBooks = () => {
-            if (currentUser.role !== 'user') {
+             // Cek role setelah currentUserProfile dipastikan ada
+            if (!currentUserProfile || currentUserProfile.role !== 'user') {
                 myBooksSection.classList.add('hidden');
                 return;
             }
             myBooksSection.classList.remove('hidden');
-            const userBooks = books.filter(b => b.borrowedBy === currentUser.username);
-            const userBookedBooks = books.filter(b => b.bookedBy === currentUser.username);
+            // Filter buku berdasarkan username dari currentUserProfile
+            const userBooks = books.filter(b => b.borrowedBy === currentUserProfile.username);
+            const userBookedBooks = books.filter(b => b.bookedBy === currentUserProfile.username);
 
             myBooksCount.textContent = `Total Dipinjam: ${userBooks.length}`;
 
@@ -726,22 +781,22 @@
                 myBooksEmpty.classList.remove('hidden');
             } else {
                 myBooksEmpty.classList.add('hidden');
-                
+
                 const allUserBooks = [...userBooks, ...userBookedBooks];
 
                 allUserBooks.forEach(book => {
                     let statusInfo = '', actionButton = '', details = '';
-                    
+
                     const formatDate = (dateString) => {
                         if (!dateString) return 'N/A';
                         const date = new Date(dateString);
                         return `${date.toLocaleDateString('id-ID')}, ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
                     };
 
-                    if (book.status === 'Dipinjam' && book.borrowedBy === currentUser.username) {
+                    if (book.status === 'Dipinjam' && book.borrowedBy === currentUserProfile.username) {
                         const dueDate = new Date(book.dueDate);
                         const isOverdue = new Date() > dueDate;
-                        
+
                         details = `
                             <div class="text-xs space-y-1 mt-2 text-slate-600">
                                 <p><strong>Tgl. Pinjam:</strong> ${formatDate(book.borrowDate)}</p>
@@ -750,7 +805,7 @@
                         `;
                         actionButton = `<button data-id="${book.id}" class="return-btn mt-3 w-full text-sm bg-green-500 text-white font-semibold py-2 px-3 rounded-md hover:bg-green-600">Kembalikan</button>`;
                         statusInfo = `<div class="mt-2 text-sm font-semibold text-red-600">Status: Sedang Dipinjam</div>`;
-                    } else if (book.bookedBy === currentUser.username) {
+                    } else if (book.bookedBy === currentUserProfile.username) {
                          statusInfo = `<div class="mt-2 text-sm font-semibold text-amber-600">Status: Anda Booking</div>`;
                          actionButton = `<button data-id="${book.id}" class="cancel-book-btn mt-3 w-full text-sm bg-slate-500 text-white font-semibold py-2 px-3 rounded-md hover:bg-slate-600">Batalkan Booking</button>`;
                     }
@@ -774,16 +829,20 @@
         };
 
         const renderBorrowingHistory = () => {
-            if (currentUser.role !== 'user') {
+             // Cek role setelah currentUserProfile dipastikan ada
+            if (!currentUserProfile || currentUserProfile.role !== 'user') {
                 borrowingHistorySection.classList.add('hidden');
                 return;
             }
             borrowingHistorySection.classList.remove('hidden');
-            
-            const userHistory = history.filter(log => 
-                log.username === currentUser.username && 
+
+            const userHistory = history.filter(log =>
+                log.username === currentUserProfile.username &&
                 (log.action === 'Pinjam' || log.action === 'Kembalikan')
             );
+
+             // Urutkan riwayat berdasarkan timestamp terbaru
+             userHistory.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
 
             borrowingHistoryList.innerHTML = '';
             if (userHistory.length === 0) {
@@ -794,11 +853,11 @@
                     const logDate = new Date(log.timestamp);
                     const formattedDate = `${logDate.toLocaleDateString('id-ID')} ${logDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
                     const actionColors = { 'Pinjam': 'text-amber-600', 'Kembalikan': 'text-green-600' };
-                    const actionIcons = { 
-                        'Pinjam': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 flex-shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`, 
+                    const actionIcons = {
+                        'Pinjam': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 flex-shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
                         'Kembalikan': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 flex-shrink-0"><path d="m15 12-8.373 8.373a1 1 0 1 1-1.414-1.414L12.172 12 5.213 5.043a1 1 0 0 1 1.414-1.414L15 12z"></path></svg>`
                     };
-                    
+
                     const logItem = `
                     <div class="bg-white p-3 rounded-md shadow-sm flex justify-between items-center text-sm">
                         <div class="flex items-center">
@@ -816,22 +875,69 @@
         };
 
 
-        const renderUserManagementPage = () => {
+        const renderUserManagementPage = async () => {
+             // Cek role setelah currentUserProfile dipastikan ada
+            if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+                showNotificationModal('Akses Ditolak', 'Hanya admin yang dapat mengakses halaman ini.');
+                showPage('home-page'); // Redirect ke home jika bukan admin
+                return;
+            }
+
+            // Reset pesan error RLS
+             rlsErrorMessage.classList.add('hidden');
+
+            // Ambil data users dari tabel 'profiles'
+            // Gunakan state 'profiles' yang sudah di-fetch
+            if (!profiles || profiles.length === 0 || isHardcodedAdmin) { // Juga cek jika admin hardcoded
+                 // Coba fetch ulang jika kosong, mungkin data belum siap?
+                 // Admin hardcoded tidak bisa fetch karena tidak punya auth.uid() Supabase
+                 if (isHardcodedAdmin) {
+                     userListTbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Manajemen pengguna tidak tersedia untuk admin hardcoded. Silakan login sebagai admin Supabase.</td></tr>';
+                     return;
+                 }
+
+                 const { data: profilesData, error: profilesError } = await supabaseClient.from('profiles').select('*');
+                 if (profilesError) {
+                     console.error("Error fetching profiles:", profilesError);
+                     if (profilesError.message.includes("infinite recursion")) {
+                         rlsErrorMessage.classList.remove('hidden');
+                     } else {
+                        showNotificationModal('Error', 'Gagal mengambil data profil pengguna.');
+                     }
+                     userListTbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500">Gagal memuat data pengguna.</td></tr>';
+                     return;
+                 }
+                 profiles = profilesData || []; // Update state
+            }
+
+
             userListTbody.innerHTML = '';
-            users.forEach(user => {
-                const isCurrentUser = user.username === currentUser.username;
-                const roleBadge = user.role === 'admin' 
+             if (!profiles || profiles.length === 0) {
+                  userListTbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Tidak ada pengguna terdaftar.</td></tr>';
+                  return;
+             }
+
+             // Urutkan profiles berdasarkan username
+             const sortedProfiles = [...profiles].sort((a, b) => a.username.localeCompare(b.username));
+
+            sortedProfiles.forEach(userProfile => {
+                const isCurrentUser = !isHardcodedAdmin && userProfile.id === currentUserProfile.id; // Cek jika bukan admin hardcoded
+                const roleBadge = userProfile.role === 'admin' 
                     ? `<span class="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Admin</span>`
                     : `<span class="bg-slate-100 text-slate-800 text-xs font-medium px-2.5 py-0.5 rounded-full">User</span>`;
                 
+                 // Coba ambil email dari session user (jika ada, tidak reliable) atau tampilkan 'N/A'
+                 // Email tidak ada di tabel 'profiles', jadi kita tampilkan 'N/A'
+                 const userEmail = 'N/A (Cek Auth)';
+
                 const actionButtons = `
-                    <button class="view-history-btn p-1 text-gray-600 hover:text-gray-800" data-username="${user.username}">
+                    <button class="view-history-btn p-1 text-gray-600 hover:text-gray-800" data-username="${userProfile.username}" title="Lihat Riwayat Peminjaman">
                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
-                    <button class="edit-user-btn p-1 text-amber-600 hover:text-amber-800" data-username="${user.username}">
+                    <button class="edit-user-btn p-1 text-amber-600 hover:text-amber-800" data-id="${userProfile.id}" data-username="${userProfile.username}" data-role="${userProfile.role}" title="Edit Peran Pengguna">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                    <button class="delete-user-btn p-1 text-red-600 hover:text-red-800 ${isCurrentUser ? 'opacity-50 cursor-not-allowed' : ''}" ${isCurrentUser ? 'disabled' : ''} data-username="${user.username}">
+                    <button class="delete-user-btn p-1 text-red-600 hover:text-red-800 ${isCurrentUser ? 'opacity-50 cursor-not-allowed' : ''}" ${isCurrentUser ? 'disabled' : ''} data-id="${userProfile.id}" data-username="${userProfile.username}" title="Hapus Pengguna (Profil Saja)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 `;
@@ -839,7 +945,8 @@
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-slate-50';
                 row.innerHTML = `
-                    <td class="p-4">${user.username} ${isCurrentUser ? '<span class="text-xs text-slate-500">(Anda)</span>' : ''}</td>
+                    <td class="p-4">${userProfile.username} ${isCurrentUser ? '<span class="text-xs text-slate-500">(Anda)</span>' : ''}</td>
+                    <td class="p-4">${userEmail}</td>
                     <td class="p-4">${roleBadge}</td>
                     <td class="p-4 text-right space-x-2">${actionButtons}</td>
                 `;
@@ -848,17 +955,24 @@
         };
 
         const renderReportsPage = () => {
+             // Cek role setelah currentUserProfile dipastikan ada
+            if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+                showNotificationModal('Akses Ditolak', 'Hanya admin yang dapat mengakses halaman ini.');
+                showPage('home-page'); // Redirect ke home jika bukan admin
+                return;
+            }
+
             // Summary Cards
             const totalBooks = books.length;
             const borrowedBooksCount = books.filter(b => b.status === 'Dipinjam').length;
             const availableBooksCount = totalBooks - borrowedBooksCount;
-            const totalUsers = users.length;
+            const totalUsers = profiles.length; // Hitung dari state profiles
             document.getElementById('report-total-books').textContent = totalBooks;
             document.getElementById('report-borrowed-books').textContent = borrowedBooksCount;
             document.getElementById('report-available-books').textContent = availableBooksCount;
             document.getElementById('report-total-users').textContent = totalUsers;
 
-            // Most Popular Books
+            // Most Popular Books (menggunakan state history)
             const borrowCounts = history.filter(h => h.action === 'Pinjam')
                 .reduce((acc, h) => {
                     acc[h.bookTitle] = (acc[h.bookTitle] || 0) + 1;
@@ -887,13 +1001,14 @@
                 });
             }
 
-            // Currently Borrowed Books
+            // Currently Borrowed Books (menggunakan state books)
             const currentlyBorrowed = books.filter(b => b.status === 'Dipinjam');
             const borrowedContainer = document.getElementById('report-currently-borrowed');
             borrowedContainer.innerHTML = '';
             if (currentlyBorrowed.length === 0) {
                 borrowedContainer.innerHTML = `<p class="text-center text-slate-500 py-6">Tidak ada buku yang sedang dipinjam.</p>`;
             } else {
+                 currentlyBorrowed.sort((a, b) => new Date(a.dueDate || 0) - new Date(b.dueDate || 0)); // Urutkan berdasarkan jatuh tempo
                 currentlyBorrowed.forEach(book => {
                     const dueDate = new Date(book.dueDate);
                     const isOverdue = new Date() > dueDate;
@@ -923,6 +1038,8 @@
                 emptyState.classList.remove('hidden');
             } else {
                 emptyState.classList.add('hidden');
+                 // Urutkan buku yang akan ditampilkan, misal berdasarkan judul
+                 booksToRender.sort((a, b) => a.title.localeCompare(b.title));
                 booksToRender.forEach(book => {
                     bookGrid.innerHTML += createBookCard(book);
                 });
@@ -933,6 +1050,8 @@
             const activePage = document.querySelector('.page:not(.hidden)');
             if (activePage) {
                 showPage(activePage.id);
+            } else if (currentUserProfile) { // Jika tidak ada halaman aktif tapi user login, tampilkan home
+                 showPage('home-page');
             }
         };
 
@@ -947,30 +1066,31 @@
             document.getElementById('modal-description').innerText = book.description;
 
             modalActionContainer.innerHTML = '';
-            const isUser = currentUser && currentUser.role === 'user';
-            
+            // Pastikan currentUserProfile ada sebelum cek role
+            const isUser = currentUserProfile && currentUserProfile.role === 'user';
+
             if (isUser) {
                 if (book.status === 'Tersedia') {
                     modalActionContainer.innerHTML = `<button id="borrow-btn" class="w-full bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-amber-700 transition-colors">Pinjam Buku</button>`;
                     modalActionContainer.querySelector('#borrow-btn').onclick = () => handleBorrow(book.id);
                 } else if (book.status === 'Dipinjam') {
-                    if (book.borrowedBy === currentUser.username) {
+                    if (book.borrowedBy === currentUserProfile.username) {
                         modalActionContainer.innerHTML = `<button id="return-btn" class="w-full bg-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">Kembalikan Buku</button>`;
                         modalActionContainer.querySelector('#return-btn').onclick = () => handleReturn(book.id);
                     } else if (!book.bookedBy) {
                         modalActionContainer.innerHTML = `<button id="book-btn" class="w-full bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-amber-700 transition-colors">Booking Buku</button>`;
                         modalActionContainer.querySelector('#book-btn').onclick = () => handleBook(book.id);
-                    } else if (book.bookedBy === currentUser.username) {
+                    } else if (book.bookedBy === currentUserProfile.username) {
                         modalActionContainer.innerHTML = `<button id="cancel-book-btn" class="w-full bg-slate-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-slate-600 transition-colors">Batalkan Booking</button>`;
                         modalActionContainer.querySelector('#cancel-book-btn').onclick = () => handleCancelBooking(book.id);
                     } else {
                          modalActionContainer.innerHTML = `<p class="text-center text-slate-600">Buku sedang dipinjam oleh ${book.borrowedBy} dan sudah di-booking oleh ${book.bookedBy}.</p>`;
                     }
                 } else if (book.status === 'Dipesan') {
-                     if (book.borrowedBy === currentUser.username) {
+                     if (book.borrowedBy === currentUserProfile.username) {
                         modalActionContainer.innerHTML = `<button id="borrow-btn" class="w-full bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-amber-700 transition-colors">Ambil & Pinjam Buku</button>`;
                         modalActionContainer.querySelector('#borrow-btn').onclick = () => handleBorrow(book.id);
-                     } else if (book.bookedBy === currentUser.username) {
+                     } else if (book.bookedBy === currentUserProfile.username) {
                         modalActionContainer.innerHTML = `<p class="text-center text-slate-600">Anda telah booking buku ini. Tunggu hingga tersedia.</p>`;
                     } else {
                         modalActionContainer.innerHTML = `<p class="text-center text-slate-600">Buku ini sudah dipesan oleh ${book.borrowedBy}.</p>`;
@@ -1006,35 +1126,23 @@
 
         const hideAddEditModal = () => addEditModal.classList.add('hidden');
 
-        const showAddEditUserModal = (username = null) => {
-            addEditUserForm.reset();
+        const showEditUserModal = (id, username, role) => {
+            editUserForm.reset();
             userFormError.textContent = '';
-            const passwordInput = document.getElementById('user-password');
-            const usernameInput = document.getElementById('user-username');
-            
-            if (username) {
-                const user = users.find(u => u.username === username);
-                modalUserFormTitle.textContent = 'Edit Pengguna';
-                document.getElementById('user-username-original').value = user.username;
-                usernameInput.value = user.username;
-                usernameInput.readOnly = true; // Username cannot be changed
-                document.getElementById('user-role').value = user.role;
-                passwordInput.placeholder = "Kosongkan jika tidak diubah";
-            } else {
-                modalUserFormTitle.textContent = 'Tambah Pengguna Baru';
-                document.getElementById('user-username-original').value = '';
-                usernameInput.readOnly = false;
-                passwordInput.placeholder = "";
-            }
-            addEditUserModal.classList.remove('hidden');
+            document.getElementById('user-id-to-edit').value = id;
+            document.getElementById('user-username-display').value = username;
+            document.getElementById('user-role').value = role;
+            editUserModal.classList.remove('hidden');
         };
 
-        const hideAddEditUserModal = () => addEditUserModal.classList.add('hidden');
-        
+        const hideEditUserModal = () => editUserModal.classList.add('hidden');
+
         const showUserHistoryModal = (username) => {
             userHistoryTitle.innerHTML = `Riwayat Peminjaman: <span class="font-bold text-amber-600">${username}</span>`;
             const userHistory = history.filter(log => log.username === username && (log.action === 'Pinjam' || log.action === 'Kembalikan'));
-            
+            // Urutkan history terbaru di atas
+             userHistory.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
             userHistoryList.innerHTML = '';
             if (userHistory.length === 0) {
                 userHistoryList.innerHTML = `<p class="text-center text-slate-500 py-6">Pengguna ini belum memiliki riwayat peminjaman.</p>`;
@@ -1051,7 +1159,6 @@
         };
 
         const hideUserHistoryModal = () => userHistoryModal.classList.add('hidden');
-
 
         const showConfirmModal = (title, message, onConfirm) => {
             document.getElementById('confirm-title').innerText = title;
@@ -1088,7 +1195,7 @@
             const editBtn = e.target.closest('.edit-btn');
             const deleteBtn = e.target.closest('.delete-btn');
             const returnBtn = e.target.closest('.return-btn');
-            const borrowBtn = e.target.closest('.borrow-btn');
+            // 'borrow-btn' sekarang hanya ada di detail modal, tidak di card 'My Books'
             const cancelBtn = e.target.closest('.cancel-book-btn');
 
             if (viewBtn) showDetailModal(parseInt(viewBtn.dataset.id));
@@ -1098,13 +1205,22 @@
             } else if (deleteBtn) {
                 const bookId = parseInt(deleteBtn.dataset.id);
                 const book = books.find(b => b.id === bookId);
-                showConfirmModal('Konfirmasi Hapus', `Apakah Anda yakin ingin menghapus buku "${book.title}"?`, () => {
-                    logHistoryAction('Hapus Buku', book.title, currentUser.username);
-                    books = books.filter(b => b.id !== bookId);
-                    saveBooks();
-                    renderAllActivePages();
-                    hideConfirmModal();
-                });
+                 // Pastikan currentUserProfile ada dan admin
+                 if (currentUserProfile && currentUserProfile.role === 'admin') {
+                     showConfirmModal('Konfirmasi Hapus', `Apakah Anda yakin ingin menghapus buku "${book.title}"?`, async () => {
+                        const { error: deleteError } = await supabaseClient.from('books').delete().eq('id', bookId);
+                        if (deleteError) {
+                             console.error("Error deleting book:", deleteError);
+                             showNotificationModal('Error', 'Gagal menghapus buku.');
+                        } else {
+                            // Log history (pastikan username benar)
+                            await logHistoryAction('Hapus Buku', book.title, currentUserProfile.username);
+                            showNotificationModal('Berhasil', `Buku "${book.title}" dihapus.`);
+                        }
+                        hideConfirmModal();
+                        // Data akan ter-update otomatis via realtime subscription
+                     });
+                 }
             }
             if (returnBtn) handleReturn(parseInt(returnBtn.dataset.id));
             if (borrowBtn) handleBorrow(parseInt(borrowBtn.dataset.id));
@@ -1117,14 +1233,23 @@
             const viewHistoryBtn = e.target.closest('.view-history-btn');
 
             if(editBtn) {
-                showAddEditUserModal(editBtn.dataset.username);
+                showEditUserModal(editBtn.dataset.id, editBtn.dataset.username, editBtn.dataset.role);
             }
             if(deleteBtn) {
+                const userId = deleteBtn.dataset.id;
                 const username = deleteBtn.dataset.username;
-                showConfirmModal('Hapus Pengguna', `Apakah Anda yakin ingin menghapus pengguna "${username}"?`, () => {
-                    users = users.filter(u => u.username !== username);
-                    saveUsers();
-                    renderUserManagementPage();
+                showConfirmModal('Hapus Pengguna', `Apakah Anda yakin ingin menghapus pengguna "${username}"? Tindakan ini hanya menghapus profil, bukan akun login.`, async () => {
+                     // Kita HANYA hapus profile, BUKAN auth user (karena butuh admin key)
+                    const { error: profileDeleteError } = await supabaseClient.from('profiles').delete().eq('id', userId);
+                    
+                     if (profileDeleteError) {
+                        console.error('Error deleting profile:', profileDeleteError);
+                        showNotificationModal('Error', `Gagal menghapus profil pengguna: ${profileDeleteError.message}`);
+                    } else {
+                        showNotificationModal('Berhasil', `Profil pengguna ${username} telah dihapus.`);
+                         // Refresh data pengguna setelah hapus profile
+                         // Data akan update via realtime
+                    }
                     hideConfirmModal();
                 });
             }
@@ -1138,8 +1263,7 @@
         addBookBtn.addEventListener('click', () => showAddEditModal());
         cancelFormBtn.addEventListener('click', hideAddEditModal);
         
-        addUserBtn.addEventListener('click', () => showAddEditUserModal());
-        cancelUserFormBtn.addEventListener('click', hideAddEditUserModal);
+        cancelUserFormBtn.addEventListener('click', hideEditUserModal);
 
         closeUserHistoryBtn.addEventListener('click', hideUserHistoryModal);
 
@@ -1149,71 +1273,86 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     coverPreview.src = event.target.result;
-                    bookCoverUrlInput.value = event.target.result; // Store as base64
+                    bookCoverUrlInput.value = event.target.result; // Store as base64 for now
+                    // TODO: Idealnya upload ke Supabase Storage dan simpan URLnya
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        addEditForm.addEventListener('submit', (e) => {
+        addEditForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+             if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+                showNotificationModal('Error', 'Hanya admin yang dapat menambah/mengedit buku.');
+                return;
+            }
             const id = parseInt(document.getElementById('book-id').value);
-            const newBook = {
+            const bookData = {
                 title: document.getElementById('book-title').value,
                 author: document.getElementById('book-author').value,
                 category: document.getElementById('book-category').value,
                 description: document.getElementById('book-description').value,
                 coverUrl: bookCoverUrlInput.value || 'https://placehold.co/400x600/slate/ffffff?text=No+Image',
             };
+
+            // Log data yang akan dikirim
+            console.log("Data buku yang akan disimpan:", bookData);
+
+             let error;
+             let operationType = ''; // Untuk logging history
             if (id) {
-                const bookIndex = books.findIndex(b => b.id === id);
-                books[bookIndex] = { ...books[bookIndex], ...newBook };
-                logHistoryAction('Edit Buku', newBook.title, currentUser.username);
+                // Edit buku
+                operationType = 'Edit Buku';
+                console.log(`Mengupdate buku dengan ID: ${id}`);
+                const { error: updateError } = await supabaseClient.from('books').update(bookData).eq('id', id);
+                error = updateError;
             } else {
-                newBook.id = Date.now();
-                newBook.status = 'Tersedia';
-                newBook.borrowedBy = null;
-                newBook.bookedBy = null;
-                newBook.dueDate = null;
-                newBook.borrowDate = null;
-                books.unshift(newBook);
-                logHistoryAction('Tambah Buku', newBook.title, currentUser.username);
+                 // Tambah buku baru
+                 operationType = 'Tambah Buku';
+                 console.log("Menambah buku baru");
+                 // Hapus ID jika ada dari bookData sebelum insert
+                 delete bookData.id;
+                const { error: insertError } = await supabaseClient.from('books').insert([bookData]);
+                 error = insertError;
             }
-            saveBooks();
-            renderAllActivePages();
-            hideAddEditModal();
+
+            if (error) {
+                console.error(`Error saving book (${operationType}):`, error);
+                // Cek jika errornya adalah tentang kolom tidak ditemukan
+                if (error.message.includes('column') && error.message.includes('does not exist')) {
+                     showNotificationModal('Error Database', `Kolom ${error.message.match(/column "(.*?)"/)?.[1] || 'tidak dikenal'} tidak ditemukan di tabel 'books'. Pastikan skema database Anda sudah benar.`);
+                } else {
+                    showNotificationModal('Error', `Gagal menyimpan buku: ${error.message}`);
+                }
+            } else {
+                console.log(`Buku berhasil disimpan (${operationType})`);
+                await logHistoryAction(operationType, bookData.title, currentUserProfile.username);
+                hideAddEditModal();
+                 // Data akan update via realtime, tidak perlu fetch ulang manual
+            }
         });
 
-        addEditUserForm.addEventListener('submit', e => {
+        editUserForm.addEventListener('submit', async e => {
             e.preventDefault();
-            const originalUsername = document.getElementById('user-username-original').value;
-            const username = document.getElementById('user-username').value;
-            const password = document.getElementById('user-password').value;
+             if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+                showNotificationModal('Error', 'Hanya admin yang dapat mengubah peran.');
+                return;
+            }
+            const id = document.getElementById('user-id-to-edit').value;
             const role = document.getElementById('user-role').value;
-
             userFormError.textContent = '';
 
-            if (originalUsername) { // Editing existing user
-                const user = users.find(u => u.username === originalUsername);
-                if(password) {
-                    user.password = password;
-                }
-                user.role = role;
-            } else { // Adding new user
-                if (!username || !password) {
-                    userFormError.textContent = 'Username dan password wajib diisi.';
-                    return;
-                }
-                if (users.some(u => u.username === username)) {
-                    userFormError.textContent = 'Username sudah digunakan.';
-                    return;
-                }
-                users.push({ username, password, role });
-            }
+            console.log(`Attempting to update profile ID: ${id} with role: ${role}`);
+            const { error } = await supabaseClient.from('profiles').update({ role }).eq('id', id);
 
-            saveUsers();
-            renderUserManagementPage();
-            hideAddEditUserModal();
+            if (error) {
+                console.error("Error updating role:", error);
+                userFormError.textContent = `Gagal memperbarui peran: ${error.message}`;
+            } else {
+                console.log(`Profile role updated successfully for ID: ${id}`);
+                hideEditUserModal();
+                 // Data profiles akan update via realtime
+            }
         });
 
         confirmOkBtn.addEventListener('click', () => { if (confirmCallback) confirmCallback(); });
@@ -1232,85 +1371,458 @@
             registerError.textContent = '';
         });
 
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = loginForm.username.value;
+            loginError.textContent = '';
+            const identifier = loginIdentifierInput.value.trim(); // Bisa username atau email
             const password = loginForm.password.value;
-            const user = users.find(u => u.username === username && u.password === password);
-            if (user) {
-                currentUser = user;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                showApp();
-            } else {
-                loginError.textContent = 'Username atau password salah.';
+
+            // --- Hardcoded Admin Check ---
+            if (identifier === 'admin123' && password === 'admin123') {
+                console.log("Hardcoded admin login attempt successful");
+                 isHardcodedAdmin = true; // Set flag
+                currentUserProfile = {
+                    id: 'admin-hardcoded', username: 'admin123', role: 'admin'
+                };
+                 loginForm.reset();
+                 await fetchInitialData(); // Panggil fetch data setelah set profile
+                 showApp();
+                 // Start realtime fallback polling
+                 startRealtimeFallback();
+                return;
+            }
+             // --- End of Hardcoded Admin Check ---
+
+            // Jika bukan admin hardcoded, lanjutkan dengan Supabase Auth (menggunakan identifier sebagai email)
+            console.log(`Mencoba login Supabase untuk email: "${identifier}"`); // Log email yang dicoba
+            console.log(`Password yang dikirim: [${password.length} karakter]`); // Log panjang password
+
+            try {
+                 // NEW VALIDATION: Check if identifier is an email
+                if (!identifier.includes('@')) {
+                     // If user tries to login with username (no @), show clear error and stop
+                     throw new Error("Untuk login Pengguna, silakan gunakan Alamat Email yang terdaftar, bukan username. (Kecuali Admin: admin123)");
+                }
+
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                     email: identifier, // Asumsikan identifier adalah email untuk Supabase
+                     password: password
+                });
+
+                if (error) throw error; // Lemparkan error untuk ditangkap di catch block
+                
+                console.log("Supabase Login successful, waiting for auth state change...");
+                loginForm.reset();
+                // onAuthStateChange akan dipicu dan memuat profile
+
+            } catch (error) {
+                 console.error("Supabase Login error:", error);
+                 if (error.message.includes("Email not confirmed")) {
+                     loginError.textContent = 'Email belum diverifikasi. Silakan cek inbox Anda.';
+                 } else if (error.message.includes("Invalid login credentials")) {
+                      // PERBAIKAN: Memberikan pesan error yang lebih jelas untuk memandu pengguna.
+                      const errorMsg = `Kredensial tidak valid. Ingat: Pengguna login dengan EMAIL, Admin login dengan username 'admin123'.`;
+                      console.error(`Login Gagal: Kredensial tidak valid untuk input '${identifier}'. ${errorMsg}`);
+                      loginError.textContent = errorMsg;
+                 } else {
+                     loginError.textContent = `${error.message}`;
+                 }
             }
         });
-        
-        registerForm.addEventListener('submit', e => {
+
+        registerForm.addEventListener('submit', async e => {
             e.preventDefault();
-            const username = document.getElementById('reg-username').value;
+            registerError.textContent = '';
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value;
-            const confirmPassword = document.getElementById('reg-confirm-password').value;
 
-            if (password !== confirmPassword) {
-                registerError.textContent = 'Password tidak cocok.';
+            if (!username || !email || !password) {
+                 registerError.textContent = 'Semua field wajib diisi.';
+                 return;
+            }
+            if (password.length < 8) {
+                registerError.textContent = 'Password harus minimal 8 karakter.';
                 return;
             }
-            if (users.some(u => u.username === username)) {
-                registerError.textContent = 'Username sudah digunakan.';
-                return;
+
+            // Cek apakah username sudah ada di tabel profiles
+            try {
+                console.log(`Checking if username exists: ${username}`);
+                const { data: existingProfile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('username')
+                    .eq('username', username)
+                    .maybeSingle();
+                
+                 if (profileError) throw profileError; // Lemparkan error jika query gagal
+
+                 console.log("Result of username check:", existingProfile);
+                if (existingProfile) {
+                    registerError.textContent = 'Username sudah digunakan. Silakan pilih username lain.';
+                    return;
+                }
+
+                // Jika username belum ada, lanjutkan pendaftaran
+                 console.log(`Username available. Proceeding with signup for email: ${email}`);
+                const { data, error: signUpError } = await supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            username: username // Simpan username di metadata saat sign up
+                        }
+                    }
+                });
+
+                 if (signUpError) throw signUpError; // Lemparkan error jika sign up gagal
+
+                 console.log("Sign up successful:", data);
+                 // Tampilkan notifikasi berdasarkan apakah user perlu konfirmasi email
+                 if (data.user && data.user.identities && data.user.identities.length === 0) {
+                     showNotificationModal('Pendaftaran Berhasil', 'Silakan cek email Anda untuk verifikasi. Jika tidak ada, cek folder spam.');
+                 } else {
+                      showNotificationModal('Pendaftaran Berhasil', 'Akun Anda telah dibuat. Silakan login.');
+                 }
+                registerForm.reset();
+                showLoginBtn.click();
+
+            } catch (error) {
+                 console.error("Registration process error:", error);
+                 if (error.message.includes("User already registered")) {
+                    registerError.textContent = "Email sudah terdaftar. Silakan login atau gunakan email lain.";
+                 } else if (error.message.includes("duplicate key value violates unique constraint")) { // Jika trigger gagal & username duplikat di profiles
+                     registerError.textContent = "Username sudah digunakan.";
+                 } else if (error.message.includes("infinite recursion")) { // Tangkap error RLS di sini juga
+                      registerError.textContent = "Terjadi masalah saat mendaftar (RLS recursion). Harap perbaiki kebijakan Supabase.";
+                 }
+                  else {
+                    registerError.textContent = `Error: ${error.message}`;
+                 }
             }
-            const newUser = { username, password, role: 'user' };
-            users.push(newUser);
-            saveUsers();
-            currentUser = newUser;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            showApp();
         });
 
-        logoutBtn.addEventListener('click', () => {
-            currentUser = null;
-            localStorage.removeItem('currentUser');
-            authScreen.classList.remove('hidden');
-            appScreen.classList.add('hidden');
-            loginForm.reset();
+        logoutBtn.addEventListener('click', async () => {
+             if (isHardcodedAdmin) {
+                 isHardcodedAdmin = false;
+                 currentUserProfile = null;
+                 // Stop fallback polling
+                 if (realtimeFallbackInterval) clearInterval(realtimeFallbackInterval);
+                 showLoginScreen();
+                 console.log("Hardcoded admin logged out.");
+             } else {
+                const { error } = await supabaseClient.auth.signOut();
+                 if (error) {
+                     console.error("Error signing out:", error);
+                     showNotificationModal('Error', 'Gagal logout.');
+                 } else {
+                     console.log("Supabase user signed out.");
+                      // onAuthStateChange akan dipicu
+                 }
+             }
         });
 
         const showApp = () => {
             authScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
             logoutBtn.classList.remove('hidden');
-            welcomeUserEl.textContent = `Hai, ${currentUser.username}!`;
-            if (currentUser.role === 'admin') {
-                addBookBtn.classList.remove('hidden');
-                manageUserNavBtn.classList.remove('hidden');
-                reportsNavBtn.classList.remove('hidden');
-            } else {
-                addBookBtn.classList.add('hidden');
-                manageUserNavBtn.classList.add('hidden');
-                reportsNavBtn.classList.add('hidden');
-            }
-            showPage('home-page');
-        };
 
-        // --- INITIALIZATION ---
-        const init = () => {
-            loadBooks();
-            loadHistory();
-            loadUsers();
-            const storedUser = localStorage.getItem('currentUser');
-            if (storedUser) {
-                currentUser = JSON.parse(storedUser);
-                showApp();
+            if (currentUserProfile) {
+                welcomeUserEl.textContent = `Hai, ${currentUserProfile.username}!`;
+                if (currentUserProfile.role === 'admin') {
+                    addBookBtn.classList.remove('hidden');
+                    manageUserNavBtn.classList.remove('hidden');
+                    reportsNavBtn.classList.remove('hidden');
+                } else {
+                    addBookBtn.classList.add('hidden');
+                    manageUserNavBtn.classList.add('hidden');
+                    reportsNavBtn.classList.add('hidden');
+                }
+                // Tampilkan halaman Beranda setelah memastikan profile ada
+                showPage('home-page');
             } else {
-                authScreen.classList.remove('hidden');
-                appScreen.classList.add('hidden');
+                 welcomeUserEl.textContent = 'Memuat...';
+                 // Mungkin tampilkan halaman loading atau nonaktifkan nav?
             }
         };
 
-        init();
+
+        const showLoginScreen = () => {
+            currentUserProfile = null;
+             isHardcodedAdmin = false;
+            authScreen.classList.remove('hidden');
+            appScreen.classList.add('hidden');
+            loginForm.reset();
+            registerForm.reset();
+             loginError.textContent = '';
+             registerError.textContent = '';
+             // Reset data saat kembali ke login
+             books = [];
+             history = [];
+             profiles = [];
+             document.getElementById('book-grid').innerHTML = ''; // Kosongkan tampilan
+             document.getElementById('newly-added-grid').innerHTML = '';
+             document.getElementById('my-books-grid').innerHTML = '';
+             document.getElementById('history-list').innerHTML = '';
+             document.getElementById('borrowing-history-list').innerHTML = '';
+             document.getElementById('user-list-tbody').innerHTML = '';
+             console.log("Returned to login screen, local data reset.");
+        }
+
+        // --- INITIALIZATION & REALTIME ---
+         const fetchInitialData = async () => {
+            console.log("Fetching initial data...");
+             let hasError = false; // Flag untuk melacak error
+
+             // Ambil data buku
+             try {
+                const { data: bookData, error: bookError } = await supabaseClient.from('books').select('*').order('created_at', { ascending: false });
+                 if (bookError) throw bookError;
+                 books = bookData || [];
+             } catch (bookError) {
+                 console.error("Error fetching books:", bookError);
+                 hasError = true;
+                 if (bookError.message.includes("fetch")) {
+                     showNotificationModal("Error Jaringan", "Gagal mengambil data buku. Cek URL Supabase Anda dan koneksi internet.");
+                 }
+             }
+
+             // Ambil data riwayat
+             try {
+                 const { data: historyData, error: historyError } = await supabaseClient.from('history').select('*').order('timestamp', { ascending: false });
+                 if (historyError) throw historyError;
+                 history = historyData || [];
+             } catch (historyError) {
+                  console.error("Error fetching history:", historyError);
+                  hasError = true;
+                  if (historyError.message.includes("fetch")) {
+                     showNotificationModal("Error Jaringan", "Gagal mengambil data riwayat. Cek URL Supabase Anda dan koneksi internet.");
+                  }
+             }
+
+
+             // Ambil data profiles (penting untuk manajemen user oleh admin)
+             if (currentUserProfile && currentUserProfile.role === 'admin' && !isHardcodedAdmin) {
+                 try {
+                    const { data: profilesData, error: profilesError } = await supabaseClient.from('profiles').select('*');
+                     if (profilesError) throw profilesError;
+                     profiles = profilesData || [];
+                     rlsErrorMessage.classList.add('hidden'); // Sembunyikan pesan error RLS jika berhasil
+                 } catch (profilesError) {
+                     console.error("Error fetching profiles:", profilesError);
+                     hasError = true;
+                      // Tampilkan pesan error RLS jika itu masalahnya
+                     if (profilesError.message.includes("infinite recursion")) {
+                         rlsErrorMessage.classList.remove('hidden');
+                     }
+                 }
+             } else if (isHardcodedAdmin) {
+                 // Admin hardcoded tidak bisa fetch profiles karena tidak punya auth.uid() Supabase
+                 console.warn("Hardcoded admin cannot fetch profiles list due to RLS.");
+                 // Kita bisa tampilkan pesan di halaman manage user
+                 profiles = []; // Kosongkan profiles
+             }
+
+
+             console.log("Initial data fetched. Books:", books.length, "History:", history.length, "Profiles:", profiles.length, "Has Error:", hasError);
+             
+             // Render ulang halaman aktif setelah data diambil
+             const activePage = document.querySelector('.page:not(.hidden)');
+             if (activePage) {
+                 showPage(activePage.id); // Ini akan memicu render function yang sesuai
+             } else if (currentUserProfile) {
+                 showPage('home-page'); // Default ke home
+             }
+        };
+
+
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            console.log(`Auth event: ${event}`, session ? `User ID: ${session.user.id}` : 'No session');
+             // Abaikan jika login admin hardcoded sedang aktif
+             if (isHardcodedAdmin) {
+                 console.log("Auth change ignored due to hardcoded admin session.");
+                 return;
+             }
+
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+                 // Cek apakah profile sudah ada DAN sesuai dengan user saat ini
+                 if (!currentUserProfile || currentUserProfile.id !== session.user.id) {
+                     console.log("Fetching profile for user:", session.user.id);
+                     try {
+                         const { data, error } = await supabaseClient
+                             .from('profiles')
+                             .select('*')
+                             .eq('id', session.user.id)
+                             .single();
+
+                         if (error) throw error; // Lemparkan error untuk ditangkap di catch block
+
+                         if (data) {
+                             console.log(`Profile loaded on ${event}:`, data);
+                             currentUserProfile = data;
+                             await fetchInitialData(); // Panggil fetch data setelah set profile
+                             showApp();
+                             // Start polling as fallback
+                             startRealtimeFallback();
+                         } else {
+                            // Kasus aneh, tidak ada error tapi data null (mungkin trigger belum selesai?)
+                            console.warn(`Profile fetch on ${event} returned null data without error. Retrying once...`);
+                            // Coba tunggu 1 detik dan fetch lagi
+                            await new Promise(resolve => setTimeout(resolve, 1000)); 
+                            const { data: retryData, error: retryError } = await supabaseClient
+                                 .from('profiles')
+                                 .select('*')
+                                 .eq('id', session.user.id)
+                                 .single();
+                             
+                             if (retryData) {
+                                 console.log(`Profile loaded on retry:`, retryData);
+                                 currentUserProfile = retryData;
+                                 await fetchInitialData();
+                                 showApp();
+                                 startRealtimeFallback();
+                             } else {
+                                 console.error("Profile still null on retry. Signing out.", retryError || "No data");
+                                 await supabaseClient.auth.signOut();
+                                 showNotificationModal('Error', 'Gagal memuat profil pengguna setelah mendaftar. Silakan coba login kembali.');
+                             }
+                         }
+                     } catch (error) {
+                         console.error(`Error fetching profile on ${event}:`, error);
+                         if (error.code === 'PGRST116') { // Not found (trigger belum selesai)
+                             console.warn("Profile not found yet. Trigger might be delayed. Retrying once...");
+                              // Coba tunggu 1 detik dan fetch lagi
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                             const { data: retryData, error: retryError } = await supabaseClient
+                                 .from('profiles')
+                                 .select('*')
+                                 .eq('id', session.user.id)
+                                 .single();
+                             
+                             if (retryData) {
+                                 console.log(`Profile loaded on retry:`, retryData);
+                                 currentUserProfile = retryData;
+                                 await fetchInitialData();
+                                 showApp();
+                                 startRealtimeFallback();
+                             } else {
+                                  console.error("Profile still null on retry (PGRST116). Signing out.", retryError || "No data");
+                                 await supabaseClient.auth.signOut();
+                                 showNotificationModal('Error', 'Gagal memuat profil pengguna setelah mendaftar. Silakan coba login kembali.');
+                             }
+                         } else if (error.message.includes("infinite recursion")) { // Tangkap error RLS
+                              console.error("RLS Infinite Recursion detected while fetching profile!");
+                              showNotificationModal("Error Kritis", "Terdeteksi masalah konfigurasi RLS (infinite recursion) saat memuat profil. Harap perbaiki kebijakan Supabase Anda.");
+                              currentUserProfile = { id: session.user.id, username: 'Error RLS', role: 'user' }; // Tampilkan state error
+                              await fetchInitialData(); // Coba fetch data lain
+                              showApp(); // Tetap tampilkan app sebisa mungkin
+                         }
+                         else {
+                             await supabaseClient.auth.signOut();
+                             showNotificationModal('Error', `Gagal memuat profil penting: ${error.message}`);
+                         }
+                     }
+                 } else {
+                      // Profile sudah ada dan sesuai, tidak perlu fetch ulang profile
+                      console.log("Profile already loaded and matches current session.");
+                      await fetchInitialData(); // Fetch data buku, history, dll
+                      showApp(); // Pastikan UI ditampilkan
+                      startRealtimeFallback();
+                 }
+            } else if (event === 'SIGNED_OUT') {
+                console.log("User signed out.");
+                showLoginScreen();
+            }
+             // Anda bisa menambahkan handler untuk event lain seperti 'PASSWORD_RECOVERY', 'USER_UPDATED' jika perlu
+        });
+
+        // --- REALTIME FALLBACK ---
+        const startRealtimeFallback = () => {
+             if (realtimeFallbackInterval) return; // Sudah jalan
+             console.log("Starting realtime fallback polling (every 15s)...");
+             realtimeFallbackInterval = setInterval(() => {
+                 console.log("Polling data update...");
+                 fetchInitialData();
+             }, 15000); // Poll every 15 seconds
+        };
+
+        // Real-time subscriptions
+        const booksSubscription = supabaseClient.channel('public:books')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'books' }, (payload) => {
+              console.log('Book change received!', payload);
+               // Cara sederhana: fetch ulang semua buku
+               fetchInitialData(); // Fetch ulang semua data agar konsisten
+          })
+          .subscribe((status, err) => {
+              if (status === 'SUBSCRIBED') {
+                console.log('Connected to books channel!');
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.error('Failed to connect to books channel:', status, err || '');
+                 // Fallback to polling if realtime fails
+                 startRealtimeFallback();
+              }
+          });
+
+        const historySubscription = supabaseClient.channel('public:history')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, (payload) => {
+              console.log('History change received!', payload);
+               fetchInitialData(); // Fetch ulang semua data
+          })
+           .subscribe((status, err) => {
+              if (status === 'SUBSCRIBED') {
+                console.log('Connected to history channel!');
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.error('Failed to connect to history channel:', status, err || '');
+                startRealtimeFallback();
+              }
+          });
+
+        const profilesSubscription = supabaseClient.channel('public:profiles')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
+              console.log('Profile change received!', payload);
+                // Fetch ulang semua profiles untuk update tabel manajemen user dan data user saat ini
+               fetchInitialData();
+
+               // Update currentUserProfile jika yang berubah adalah user saat ini
+               if (!isHardcodedAdmin && currentUserProfile && payload.new && payload.new.id === currentUserProfile.id) {
+                    console.log("Current user's profile updated by subscription:", payload.new);
+                    currentUserProfile = payload.new;
+                    // Mungkin perlu update UI spesifik seperti welcome message jika hanya username berubah
+                    welcomeUserEl.textContent = `Hai, ${currentUserProfile.username}!`;
+                    // Periksa apakah peran berubah dan sesuaikan UI admin/user
+                    if (currentUserProfile.role === 'admin') {
+                         addBookBtn.classList.remove('hidden');
+                         manageUserNavBtn.classList.remove('hidden');
+                         reportsNavBtn.classList.remove('hidden');
+                    } else {
+                         addBookBtn.classList.add('hidden');
+                         manageUserNavBtn.classList.add('hidden');
+                         reportsNavBtn.classList.add('hidden');
+                    }
+               }
+          })
+           .subscribe((status, err) => {
+              if (status === 'SUBSCRIBED') {
+                console.log('Connected to profiles channel!');
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.error('Failed to connect to profiles channel:', status, err || '');
+                startRealtimeFallback();
+              }
+          });
+
+         // Hapus listener saat halaman ditutup
+         window.addEventListener('beforeunload', () => {
+             console.log("Removing Supabase channels before unload.");
+             supabaseClient.removeChannel(booksSubscription);
+             supabaseClient.removeChannel(historySubscription);
+             supabaseClient.removeChannel(profilesSubscription);
+             if (realtimeFallbackInterval) clearInterval(realtimeFallbackInterval);
+         });
+
+         // Panggil fetchInitialData sekali di awal (jika tidak ada session aktif, tidak akan melakukan apa2 sampai login)
+         // fetchInitialData(); // Sebaiknya dipanggil setelah auth state change pertama kali
+
     });
     </script>
 </body>
 </html>
-
